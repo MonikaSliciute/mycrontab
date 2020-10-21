@@ -112,20 +112,6 @@ done
 retval=$insertTime # return frequency e.g. 0 * * * * *
 }
 
-#crontab guide ##### should probs delete
-view_guide () {
-echo "Guide to job's frequency:"
-echo "Order of time values: minute hour day-of-month month day-of-week"
-echo "Valid values:"
-echo " - minute: 0-59"
-echo " - hour: 0-23"
-echo " - day of month: 1-31"
-echo " - month: 1-12"
-echo " - day of week: 0-7 (0 or 7 is Sunday)"
-echo " - or an asterisk (*) which stands for first-last "
-echo "Example: 0 9 * * * - repeat the job at 9am every day"
-}
-
 #insert a job with custom settings:
 custom_insert () {
 frequency=""
