@@ -414,71 +414,26 @@ while IFS= read -r line # loop through the temp file
 do
 
 job="$line" # get a single line from a file (crontab job)
+check=$( echo "$job" | cut -d" " -f 1 )
+if [ "$check" = "@reboot" ]
+then
+freq=$check
+command=$( echo "$job" | cut -d" " -f 2- ) # get the command part
+else
 freq=$( echo "$job" | cut -d" " -f 1-5 ) # get just the frequency setting
 command=$( echo "$job" | cut -d" " -f 6- ) # get the command part
+fi
+
 id=$( echo "$job" | cut -d"#" -f 2 ) # get the job id number
 command=$( echo "$command" | cut -d"#" -f 1 ) # get rid of the id comment
 freq=$(echo "$job" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
 
-string="" # to save the translation
-count=1 # to count words in frequency string
-
-for word in $freq # loop through each word in freqency string
-do
-
-case $count in
-1)
-if [ $word = "o" ] # if it used to be an asterisk
-then
-string="At every minute"
-else
-string="At minute $word"
-fi
-;;
-2)
-if [ $word = "o" ]
-then
-string="$string every hour"
-else
-string="$string past hour $word"
-fi
-;;
-3)
-if [ $word = "o" ]
-then
-string="$string on every day"
-else
-string="$string on day $word"
-fi
-;;
-4)
-if [ $word = "o" ]
-then
-string="$string in every month"
-else
-string="$string in $word"
-fi
-;;
-5)
-if [ $word = "o" ]
-then
-string="$string every week day"
-else
-string="$string on day: $word"
-fi
-;;
-*)
-;;
-esac
-
-count=$(($count+1)) # increment count 
-done # foreach loop end
-
-string="$id. $string, run the following command: "
+translate $freq # translate the frequency string
+string=$retval # get the return value from the translate method
+string="$id. $string"
 echo "$string $command"
 echo
 done < jobList.txt # while loop end
-
 rm jobList.txt # remove the temporary file
 }
 
