@@ -229,7 +229,7 @@ echo
 translate () {
 string=""
 # cases for presets
-freq_o="$1 $2 $3 $4 $5"    # add special cases e.g. @reboot
+freq_o="$1 $2 $3 $4 $5"
 
 case "$freq_o" in
 "0 o o o o")
@@ -250,6 +250,12 @@ string="At the beginning of every year, run the following command:"
 *)
 ;;
 esac
+
+# translation for special presets
+if [ "$1" = "@reboot" ]
+then
+string="At every reboot, run the following command:"
+fi
 
 # custom
 if [ "$string" = "" ]
