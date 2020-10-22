@@ -78,31 +78,24 @@ until [ $input -gt 0 -a $input -le 6 2>/dev/null ]
 do
 read -p "Choose one of the above options:" input
 insertTime=""
-string=""
 case $input in
 1)
-insertTime="0 * * * *" 
-string="At the beginning of every hour, run the following command:"
+insertTime="0 * * * *"
 ;;
 2)
 insertTime="0 0 * * *"
-string="At the beginning of every day, run the following command:"
 ;;
 3)
 insertTime="0 0 * * 0"
-string="At the beginning of every week(Sunday), run the following command:"
 ;;
 4)
 insertTime="0 0 1 * *"
-string="At the beginning of every month, run the following command:"
 ;;
 5)
 insertTime="0 0 1 1 *"
-string="At the beginning of every year, run the following command:"
 ;;
 6)
 insertTime="@reboot"
-string="At every reboot, run the following command:"
 ;;
 *)
 echo "Invalid input. Choose an option between 1-6."
