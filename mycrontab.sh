@@ -52,7 +52,7 @@ do
 read -p "Create the above job? (y/n):" answer
 if [ "$answer" = "$yes" ]
 then
-crontab -l | { cat; echo "$command #$id"; } | crontab -
+crontab -l 2>/dev/null | { cat; echo "$command #$id"; } | crontab -
 id=$(($id+1)) # increment id
 elif [ "$answer" = "$no" ]
 then
@@ -408,11 +408,16 @@ retval=$daystring
 
 displayJobs () {
 
-echo "$(crontab -l)" > jobList.txt # create a temporary file to store jobs
+echo "$(crontab -l 2>/dev/null )" > jobList.txt # create a temporary file to store jobs
+firstLine=$( cat jobList.txt) #get the content of the crontab job file to check if it's empty
 
+if [ -z "$firstLine" ] # check if empty
+then
+echo "There are no crontab jobs to display."
+else
+echo "Current crontab jobs:"
 while IFS= read -r line # loop through the temp file
 do
-
 job="$line" # get a single line from a file (crontab job)
 check=$( echo "$job" | cut -d" " -f 1 )
 if [ "$check" = "@reboot" ]
@@ -434,13 +439,15 @@ string="$id. $string"
 echo "$string $command"
 echo
 done < jobList.txt # while loop end
+
+fi
 rm jobList.txt # remove the temporary file
 }
 
 # MAIN:
 i=1 # to identify jobs
 # get the last id number and increment it:
-i=$(crontab -l | sort -t '#' -k 2 | tail -n 1 | cut -d"#" -f 2 )
+i=$(crontab -l 2>/dev/null | sort -t '#' -k 2 | tail -n 1 | cut -d"#" -f 2 )
 i=$(($i+1))
 
 key=0 #default key for user input
@@ -457,7 +464,6 @@ echo
 #cases:
 case $key in
 1)
-echo "Current crontab jobs:"
 displayJobs
 ;;
 2)
