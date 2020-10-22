@@ -16,6 +16,7 @@ echo "9. Exit"
 
 #insert job
 insert () {
+echo "Inserting a job:"
 id=$1
 echo "Choose a preset or enter a specific frequency: "
 echo
@@ -23,7 +24,7 @@ echo "1. Preset"
 echo "2. Custom"
 echo
 option=0 # default
-until [ $option -eq 1 -o $option -eq 2 2>/dev/null ]
+until [ $option -eq 1 -o $option -eq 2 2>/dev/null ] # wait for a valid user input
 do
 read -p "Choose one of the above options: " option
 if [ $option -eq 1 ]
@@ -47,7 +48,7 @@ echo
 command="$freq $command" # e.g. * * 1 2 3 echo "Hello"
 
 answer="" # reset answer
-until [ "$answer" = "$yes" -o "$answer" = "$no" 2>/dev/null ]
+until [ "$answer" = "$yes" -o "$answer" = "$no" 2>/dev/null ] # wait for a valid user input
 do
 read -p "Create the above job? (y/n):" answer
 if [ "$answer" = "$yes" ]
@@ -204,26 +205,52 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 
 #edit a job:
 edit () {
-
-read -p "Enter job's number: " number #ask user to give you a job number
+echo "Choose a job to edit:"
+editID=$1 #last id number to edit
+displayJobs
+noJobs=$?
+if [ $noJobs -eq 1 ] # check if the job list is empty
+then 
+echo 
+else
+number=0 #default
+until [ $number -ge 1 -a $number -lt $editID 2>/dev/null ]
+do
+read -p "Enter job's number: " number #ask user for a job number to edit
+done
 crontab -l | grep -v "#$number" | crontab - # delete job
-insert $number
-crontab -l | sort -t '#' -k 2 | crontab -
+echo
+insert $number # insert an edited job
+crontab -l | sort -t '#' -k 2 | crontab - # sort the job list by jobs' id numbers
 echo
 echo "Job successfully edited."
 echo
+
+fi
 }
 
 #remove a job:
 remove () {
-
+echo "Choose a job to remove:"
+removeID=$1
+displayJobs
+noJobs=$?
+if [ $noJobs -eq 1 ]
+then
+echo 
+else
+number=0
+until [ $number -ge 1 -a $number -lt $removeID 2>/dev/null ]
+do
 read -p "Enter job's number: " number
+done
 crontab -l | grep -v "#$number" | crontab -
 echo 
 echo "Job successfully removed"
 #### leaves a gap in the id numbers e.g. if we remove a job in the middle of the job list e.g. job 3, the job list is now 1 2 4 5..
 #### id increments when adding new jobs after deleting the last job e.g. total jobs = 7, remove job 7, total jobs = 6, next job = 8
 echo
+fi
 }
 
 translate () {
@@ -413,7 +440,9 @@ firstLine=$( cat jobList.txt) #get the content of the crontab job file to check 
 
 if [ -z "$firstLine" ] # check if empty
 then
-echo "There are no crontab jobs to display."
+echo "There are no crontab jobs."
+return 1 # return 1(true) if there are no jobs
+
 else
 echo "Current crontab jobs:"
 while IFS= read -r line # loop through the temp file
@@ -440,6 +469,7 @@ echo "$string $command"
 echo
 done < jobList.txt # while loop end
 
+return 0 # return 0(false) if there are jobs
 fi
 rm jobList.txt # remove the temporary file
 }
@@ -463,27 +493,22 @@ echo "Option chosen: $key"
 echo
 #cases:
 case $key in
-1)
+1) # display all jobs:
 displayJobs
 ;;
-2)
-echo "Inserting a job:"
-insert $i # pass new job id
-i=$retval
+2) # insert a new job:
+insert $i # pass a new job id
+i=$retval # return incremented id
 ;;
-3)
-echo "Editing a job:"
-displayJobs
-edit
+3) # edit a job:
+edit $i
 ;;
-4)
-echo "Removing a job:"
-displayJobs
-remove
+4) # remove a job:
+remove $i
 ;;
-5)
+5) # remove all jobs:
+crontab -r 2>/dev/null 
 echo "All jobs were removed."
-crontab -r
 i=1 # reset the id to 1 again
 ;;
 9)
