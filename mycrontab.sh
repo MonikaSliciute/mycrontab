@@ -441,6 +441,7 @@ firstLine=$( cat jobList.txt) #get the content of the crontab job file to check 
 if [ -z "$firstLine" ] # check if empty
 then
 echo "There are no crontab jobs."
+rm jobList.txt # remove the temporary file
 return 1 # return 1(true) if there are no jobs
 
 else
@@ -468,10 +469,9 @@ string="$id. $string"
 echo "$string $command"
 echo
 done < jobList.txt # while loop end
-
+rm jobList.txt # remove the temporary file
 return 0 # return 0(false) if there are jobs
 fi
-rm jobList.txt # remove the temporary file
 }
 
 # MAIN:
