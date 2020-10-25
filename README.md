@@ -1,1 +1,2 @@
 # mycrontab
+A shell script application for Unix-like operating systems which acts as a friendly interface for the user who wants to use the “crontab” command through choices that he can have using a carefully designed menu. By using this script, the user can check what tasks run periodically and when, add new tasks, edit a task, delete an existing task or delete all tasks in the list. By offering a friendly human readable terminal interface, the user is not expected to understand the structure of the “crontab” file or its commands to run this application. 
