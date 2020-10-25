@@ -232,25 +232,44 @@ fi
 #remove a job:
 remove () {
 echo "Choose a job to remove:"
-removeID=$1
+maxRemoveID=$1
 displayJobs
-noJobs=$?
-if [ $noJobs -eq 1 ]
+noJobs=$? 
+if [ $noJobs -eq 1 ] # check if displayJobs returns a 'no jobs' flag
 then
-echo 
-else
-number=0
-until [ $number -ge 1 -a $number -lt $removeID 2>/dev/null ]
+echo # message already generated in displayJobs method
+
+else # jobs exist:
+number=0 # to check if such job exists
+until [ $number -ge 1 -a $number -lt $maxRemoveID 2>/dev/null ]
 do
 read -p "Enter job's number: " number
 done
-crontab -l | grep -v "#$number" | crontab -
+
+crontab -l | grep -v "#$number" | crontab -  #save all jobs except the job that needs removing
+echo "$(crontab -l 2>/dev/null )" > jobList.txt # create a temporary file with all crontab jobs
+number=1 # to create new ids
+line=""
+
+# a loop to amend job ids after the job removal:
+while IFS= read -r line # loop through the crontab list
+do
+newline="$( echo "$line" | cut -d"#" -f 1)" # get the job
+newline="$newline#$number" # amend the job's id
+echo "$newline" >> newJobs.txt # save the job to a new file
+number=$(($number+1)) # increment id
+done < jobList.txt 
+cat newJobs.txt | crontab - # save the updated job list to crontab
+
+# remove temporary files:
+rm jobList.txt 
+rm newJobs.txt
+
 echo 
 echo "Job successfully removed"
-#### leaves a gap in the id numbers e.g. if we remove a job in the middle of the job list e.g. job 3, the job list is now 1 2 4 5..
-#### id increments when adding new jobs after deleting the last job e.g. total jobs = 7, remove job 7, total jobs = 6, next job = 8
 echo
 fi
+return $number # return a new job id, already incremented
 }
 
 translate () {
@@ -505,6 +524,7 @@ edit $i
 ;;
 4) # remove a job:
 remove $i
+i=$? # get a new job id after the job removal
 ;;
 5) # remove all jobs:
 crontab -r 2>/dev/null 
