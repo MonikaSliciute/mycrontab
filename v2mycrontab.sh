@@ -266,7 +266,7 @@ then
 echo "You cannot use ranges and lists with weekday names."
 validInput=0
 
-elif [[ "$weekday" =~ [a-z,A-Z] ]] # input with just letters
+elif [[ "$weekday" =~ [a-z] ]] # input with just letters
 then
 weekdayLower=$(echo "$weekday" | tr '[:upper:]' '[:lower:]')
 dayList=("sun" "mon" "tue" "wed" "thu" "fri" "sat")
@@ -394,7 +394,6 @@ fi
 if [ "$string" = "" ]
 then
 # custom translate
-
 count=1 # to count words in frequency string
 
 ### e.g. freq_o="1-20 */2 1-3,28 dec fri"
@@ -402,7 +401,7 @@ for word in $freq_o # loop through each word in freqency string
 do
 
 case $count in
-1)
+1) # MINUTES:
 if [ $word = "o" ] # if it used to be an asterisk
 then
 string="At every minute"
@@ -414,16 +413,17 @@ minAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 minBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$minBeforeSlash" =~ "-" ]]
 then
-string="Between $minBeforeSlash every $minAfterSlash minutes"
+string="Between $minBeforeSlash minutes every $minAfterSlash minutes"
 else
 string="Every $minAfterSlash minutes"
 fi
 
 else
-string="At minute $word"
+string="At minute(s) $word"
 fi
 ;;
-2)
+
+2) # HOURS:
 if [ $word = "o" ]
 then
 string="$string every hour"
@@ -435,16 +435,17 @@ hourAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 hourBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$hourBeforeSlash" =~ "-" ]]
 then
-string="$string between $hourBeforeSlash every $hourAfterSlash hours"
+string="$string between $hourBeforeSlash hours every $hourAfterSlash hours"
 else
 string="$string every $hourAfterSlash hours"
 fi
 
 else
-string="$string past hour $word"
+string="$string past hour(s) $word"
 fi
 ;;
-3)
+
+3) # DAY:
 if [ $word = "o" ]
 then
 string="$string on every day"
@@ -455,39 +456,57 @@ dayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 dayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$dayBeforeSlash" =~ "-" ]]
 then
-string="$string between $dayBeforeSlash every $dayAfterSlash days"
+string="$string between days $dayBeforeSlash every $dayAfterSlash days"
 else
 string="$string every $dayAfterSlash days"
 fi
 
 else
-string="$string on day $word"
+string="$string on day(s) $word"
 fi
 ;;
-4)
+
+4) # MONTH:
 if [ $word = "o" ]
 then
 string="$string every month"
-# if there's a range or a list
-# elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
+elif [[ "$word" =~ "/" ]]
+then
+### split before and after '/'
+monthAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
+monthBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
+if [[ "$monthBeforeSlash" =~ "-" ]]
+then
+### split before and after '-'
+m1=$(echo "$monthBeforeSlash" | cut -d'-' -f 1)
+m2=$(echo "$monthBeforeSlash" | cut -d'-' -f 2)
+getMonth $m1
+m1=$retval
+getMonth $m2
+m2=$retval
+string="$string between months $m1 and $m2 every $monthAfterSlash months"
 else
-getMonth $month # call get month and pass month(int)
+string="$string every $monthAfterSlash months"
+fi
+
+else
+getMonth $word # call get month and pass month(int)
 mthname=$retval # get the return value
 string="$string in month $mthname"
-
-# elif [ "$word" =~ [a-z,A-Z] ]
-# then
-#string="$string in month $mthname"
 fi
 ;;
-5)
+
+5) # WEEKDAY:
 if [ $word = "o" ]
 then
 string="$string every weekday"
 # if there's a range or a list
-# elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
+elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
+then
+weekdayTrans=$(echo "$word" | tr "0" "Sunday" | tr "1" "Monday" | tr "2" "Tuesday" | tr "3" "Wednesday" | tr "4" "Thursday" | tr "5" "Friday" | tr "6" "Saturday" | tr "7" "Sunday")
+string="$string on $weekdayTrans"
 else
-getWeekday $weekday # call getWeekday with weekday(int)
+getWeekday $word # call getWeekday with weekday(int)
 weekname=$retval # get the return value: weekday(string)
 string="$string on $weekname"
 
