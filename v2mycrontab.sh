@@ -492,18 +492,8 @@ fi
 # if there's a range or a list
 elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 then
-monthTrans=$(echo ${word/1/January})
-monthTrans=$(echo ${monthTrans/2/February})
-monthTrans=$(echo ${monthTrans/3/March})
-monthTrans=$(echo ${monthTrans/4/April})
-monthTrans=$(echo ${monthTrans/5/May})
-monthTrans=$(echo ${monthTrans/6/June})
-monthTrans=$(echo ${monthTrans/7/July})
-monthTrans=$(echo ${monthTrans/8/August})
-monthTrans=$(echo ${monthTrans/9/September})
-monthTrans=$(echo ${monthTrans/10/October})
-monthTrans=$(echo ${monthTrans/11/November})
-monthTrans=$(echo ${monthTrans/12/December})
+getMonth $word
+monthTrans=$retval
 string="$string in $monthTrans"
 
 elif [[ "$word" =~ [a-z] ]]
@@ -512,8 +502,8 @@ string="$string on $word"
 
 else
 getMonth $word # call get month and pass month(int)
-mthname=$retval # get the return value
-string="$string in month $mthname"
+monthTrans=$retval # get the return value
+string="$string in month $monthTrans"
 fi
 ;;
 
@@ -545,14 +535,8 @@ fi
 # if there's a range or a list
 elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 then
-weekdayTrans=$(echo ${word/1/Monday})
-weekdayTrans=$(echo ${weekdayTrans/2/Tuesday})
-weekdayTrans=$(echo ${weekdayTrans/3/Wednesday})
-weekdayTrans=$(echo ${weekdayTrans/4/Thursday})
-weekdayTrans=$(echo ${weekdayTrans/5/Friday})
-weekdayTrans=$(echo ${weekdayTrans/6/Saturday})
-weekdayTrans=$(echo ${weekdayTrans/7/Sunday})
-weekdayTrans=$(echo ${weekdayTrans/0/Sunday})
+getWeekday $word
+weekdayTrans=$retval
 string="$string on $weekdayTrans"
 
 elif [[ "$word" =~ [a-z] ]]
@@ -561,8 +545,8 @@ string="$string on $word"
 
 else
 getWeekday $word # call getWeekday with weekday(int)
-weekname=$retval # get the return value: weekday(string)
-string="$string on $weekname"
+weekdayTrans=$retval # get the return value: weekday(string)
+string="$string on $weekdayTrans"
 fi
 ;;
 *)
@@ -578,86 +562,39 @@ fi # end of if custom
 retval=$string # return translated job
 }
 getMonth () { #translate month(int) to month(string)
-month=$1
-monthstring=""
-case $month in
-1)
-monthstring="January"
-;;
-2)
-monthstring="February"
-;;
-3)
-monthstring="March"
-;;
-4)
-monthstring="April"
-;;
-5)
-monthstring="May"
-;;
-6)
-monthstring="June"
-;;
-7)
-monthstring="July"
-;;
-8)
-monthstring="August"
-;;
-9)
-monthstring="September"
-;;
-10)
-monthstring="October"
-;;
-11)
-monthstring="November"
-;;
-12)
-monthstring="December"
-;;
-*)
-monthstring=""
-;;
-esac
-retval=$monthstring
+monthTrans=$1
+
+monthTrans=$(echo ${monthTrans/1/January})
+monthTrans=$(echo ${monthTrans/2/February})
+monthTrans=$(echo ${monthTrans/3/March})
+monthTrans=$(echo ${monthTrans/4/April})
+monthTrans=$(echo ${monthTrans/5/May})
+monthTrans=$(echo ${monthTrans/6/June})
+monthTrans=$(echo ${monthTrans/7/July})
+monthTrans=$(echo ${monthTrans/8/August})
+monthTrans=$(echo ${monthTrans/9/September})
+monthTrans=$(echo ${monthTrans/10/October})
+monthTrans=$(echo ${monthTrans/11/November})
+monthTrans=$(echo ${monthTrans/12/December})
+
+retval=$monthTrans
 }
 
 getWeekday () { #translate weekday(int) to weekday(string)
-day=$1
-daystring=""
-case $day in
-1)
-daystring="Mondays"
-;;
-2)
-daystring="Tuesdays"
-;;
-3)
-daystring="Wednesdays"
-;;
-4)
-daystring="Thursdays"
-;;
-5)
-daystring="Fridays"
-;;
-6)
-daystring="Saturdays"
-;;
-7)
-daystring="Sundays"
-;;
-0)
-daystring="Sundays"
-;;
-*)
-daystring=""
-;;
-esac
-retval=$daystring
+weekdayTrans=$1
+
+weekdayTrans=$(echo ${weekdayTrans/1/Monday})
+weekdayTrans=$(echo ${weekdayTrans/2/Tuesday})
+weekdayTrans=$(echo ${weekdayTrans/3/Wednesday})
+weekdayTrans=$(echo ${weekdayTrans/4/Thursday})
+weekdayTrans=$(echo ${weekdayTrans/5/Friday})
+weekdayTrans=$(echo ${weekdayTrans/6/Saturday})
+weekdayTrans=$(echo ${weekdayTrans/7/Sunday})
+weekdayTrans=$(echo ${weekdayTrans/0/Sunday})
+
+retval=$weekdayTrans
 }
+
 
 displayJobs () {
 
