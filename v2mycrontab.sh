@@ -261,7 +261,7 @@ until [ $validInput -eq 1 ]
 do
 read -p "Enter weekday (0-7 note: 0 and 7 is Sunday): " weekday
 
-if [[ "$weekday" =~ [a-z,A-Z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]] #input with letters and ranges
+if [[ "$weekday" =~ [a-z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]] #input with letters and ranges
 then
 echo "You cannot use ranges and lists with weekday names."
 validInput=0
@@ -488,6 +488,26 @@ string="$string between months $m1 and $m2 every $monthAfterSlash months"
 else
 string="$string every $monthAfterSlash months"
 fi
+# if there's a range or a list
+elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
+then
+monthTrans=$(echo ${word/1/January})
+monthTrans=$(echo ${monthTrans/2/February})
+monthTrans=$(echo ${monthTrans/3/March})
+monthTrans=$(echo ${monthTrans/4/April})
+monthTrans=$(echo ${monthTrans/5/May})
+monthTrans=$(echo ${monthTrans/6/June})
+monthTrans=$(echo ${monthTrans/7/July})
+monthTrans=$(echo ${monthTrans/8/August})
+monthTrans=$(echo ${monthTrans/9/September})
+monthTrans=$(echo ${monthTrans/10/October})
+monthTrans=$(echo ${monthTrans/11/November})
+monthTrans=$(echo ${monthTrans/12/December})
+string="$string in $monthTrans"
+
+elif [[ "$word" =~ [a-z] ]]
+then
+string="$string on $word"
 
 else
 getMonth $word # call get month and pass month(int)
@@ -500,19 +520,47 @@ fi
 if [ $word = "o" ]
 then
 string="$string every weekday"
+
+elif [[ "$word" =~ "/" ]]
+then
+### split before and after '/'
+weekdayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
+weekdayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
+if [[ "$weekdayBeforeSlash" =~ "-" ]]
+then
+### split before and after '-'
+w1=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 1)
+w2=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 2)
+getWeekday $w1
+w1=$retval
+getWeekday $w2
+w2=$retval
+string="$string between weekdays $w1 and $w2 every $monthAfterSlash days"
+else
+string="$string every $weekdayAfterSlash days"
+fi
+
 # if there's a range or a list
 elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 then
-weekdayTrans=$(echo "$word" | tr "0" "Sunday" | tr "1" "Monday" | tr "2" "Tuesday" | tr "3" "Wednesday" | tr "4" "Thursday" | tr "5" "Friday" | tr "6" "Saturday" | tr "7" "Sunday")
+weekdayTrans=$(echo ${word/1/Monday})
+weekdayTrans=$(echo ${weekdayTrans/2/Tuesday})
+weekdayTrans=$(echo ${weekdayTrans/3/Wednesday})
+weekdayTrans=$(echo ${weekdayTrans/4/Thursday})
+weekdayTrans=$(echo ${weekdayTrans/5/Friday})
+weekdayTrans=$(echo ${weekdayTrans/6/Saturday})
+weekdayTrans=$(echo ${weekdayTrans/7/Sunday})
+weekdayTrans=$(echo ${weekdayTrans/0/Sunday})
 string="$string on $weekdayTrans"
+
+elif [[ "$word" =~ [a-z] ]]
+then
+string="$string on $word"
+
 else
 getWeekday $word # call getWeekday with weekday(int)
 weekname=$retval # get the return value: weekday(string)
 string="$string on $weekname"
-
-#elif [ "$word" =~ [a-z,A-Z] ]
-#then
-#string="$string on $weekname"
 fi
 ;;
 *)
