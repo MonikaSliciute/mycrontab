@@ -209,7 +209,7 @@ validInput=0
 until [ $validInput -eq 1 ]
 do
 read -p "Enter month (1-12): " month
-
+month=$(echo "$month" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [[ "$month" =~ [a-z] ]] && [[ "$month" =~ "-" || "$month" =~ "/" || "$month" =~ "," ]] #input with letters and ranges
 then
 echo "You cannot use ranges and lists with month names."
@@ -260,7 +260,7 @@ validInput=0
 until [ $validInput -eq 1 ]
 do
 read -p "Enter weekday (0-7 note: 0 and 7 is Sunday): " weekday
-
+weekday=$(echo "$weekday" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [[ "$weekday" =~ [a-z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]] #input with letters and ranges
 then
 echo "You cannot use ranges and lists with weekday names."
@@ -467,6 +467,7 @@ fi
 ;;
 
 4) # MONTH:
+word=$(echo "$word" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [ $word = "o" ]
 then
 string="$string every month"
@@ -517,6 +518,7 @@ fi
 ;;
 
 5) # WEEKDAY:
+word=$(echo "$word" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [ $word = "o" ]
 then
 string="$string every weekday"
