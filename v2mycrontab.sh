@@ -39,6 +39,7 @@ done
 
 freq=$retval # returns a frequency e.g. * * 1 2 3 from preset_insert or custom_insert
 read -p "Enter a command:" command  # command e.g. echo "Hello"
+
 freq_o=$(echo "$freq" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
 translate $freq_o
 string=$retval
@@ -396,6 +397,7 @@ then
 
 count=1 # to count words in frequency string
 
+### e.g. freq_o="1-20 */2 1-3,28 dec fri"
 for word in $freq_o # loop through each word in freqency string
 do
 
@@ -404,6 +406,19 @@ case $count in
 if [ $word = "o" ] # if it used to be an asterisk
 then
 string="At every minute"
+
+elif [[ "$word" =~ "/" ]]
+then
+### split before and after '/'
+minAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
+minBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
+if [[ "$minBeforeSlash" =~ "-" ]]
+then
+string="Between $minBeforeSlash every $minAfterSlash minutes"
+else
+string="Every $minAfterSlash minutes"
+fi
+
 else
 string="At minute $word"
 fi
@@ -412,6 +427,19 @@ fi
 if [ $word = "o" ]
 then
 string="$string every hour"
+
+elif [[ "$word" =~ "/" ]]
+then
+### split before and after '/'
+hourAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
+hourBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
+if [[ "$hourBeforeSlash" =~ "-" ]]
+then
+string="$string between $hourBeforeSlash every $hourAfterSlash hours"
+else
+string="$string every $hourAfterSlash hours"
+fi
+
 else
 string="$string past hour $word"
 fi
@@ -420,6 +448,18 @@ fi
 if [ $word = "o" ]
 then
 string="$string on every day"
+elif [[ "$word" =~ "/" ]]
+then
+### split before and after '/'
+dayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
+dayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
+if [[ "$dayBeforeSlash" =~ "-" ]]
+then
+string="$string between $dayBeforeSlash every $dayAfterSlash days"
+else
+string="$string every $dayAfterSlash days"
+fi
+
 else
 string="$string on day $word"
 fi
@@ -428,20 +468,32 @@ fi
 if [ $word = "o" ]
 then
 string="$string every month"
+# if there's a range or a list
+# elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 else
 getMonth $month # call get month and pass month(int)
 mthname=$retval # get the return value
 string="$string in month $mthname"
+
+# elif [ "$word" =~ [a-z,A-Z] ]
+# then
+#string="$string in month $mthname"
 fi
 ;;
 5)
 if [ $word = "o" ]
 then
 string="$string every weekday"
+# if there's a range or a list
+# elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 else
 getWeekday $weekday # call getWeekday with weekday(int)
 weekname=$retval # get the return value: weekday(string)
 string="$string on $weekname"
+
+#elif [ "$word" =~ [a-z,A-Z] ]
+#then
+#string="$string on $weekname"
 fi
 ;;
 *)
@@ -585,7 +637,7 @@ until [ $key -eq 9 2>/dev/null ]
 do
 
 # create/update job list file:
-rm newJobList.txt # remove the file if already exists
+rm newJobList.txt 2>/dev/null # remove the file if already exists
 i=1 # to count jobs/give them IDs
 echo "$(crontab -l 2>/dev/null )" > jobList.txt # create a temporary file with all crontab jobs
 firstLine=$( cat jobList.txt) #get the content of the crontab job file to check if it's empty
@@ -604,7 +656,7 @@ i=$(($i+1)) # increment id
 done < jobList.txt 
 fi
 # remove temporary files:
-rm jobList.txt 
+rm jobList.txt 2>/dev/null
 
 echo 
 menu #display menu
@@ -632,7 +684,7 @@ echo "All jobs were removed."
 i=1 # reset the id to 1 again
 ;;
 9)
-rm newJobList.txt # delete the temporary file
+rm newJobList.txt 2>/dev/null # delete the temporary file
 echo "Exit"
 ;;
 *)
