@@ -313,6 +313,7 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 edit () {
 echo "Choose a job to edit:"
 maxEditID=$1 #last id number to edit
+echo "$maxEditID"
 displayJobs
 noJobs=$?
 if [ $noJobs -eq 1 ] # check if the job list is empty
@@ -661,16 +662,16 @@ retval=$daystring
 
 displayJobs () {
 
-firstLine=$( cat newJobList.txt) #get the content of the crontab job file to check if it's empty
-
-if [ -z "$firstLine" ] # check if empty
+crontabFile=$( crontab -l 2>/dev/null ) #get the content of the crontab job file to check if it's empty
+num=1
+if [ -z "$crontabFile" ] # check if empty
 then
 echo "There are no crontab jobs."
 return 1 # return 1(true) if there are no jobs
 
 else
 echo "Current crontab jobs:"
-while IFS= read -r line # loop through the temp file
+crontab -l | while IFS= read -r line # loop through the crontab file
 do
 job="$line" # get a single line from a file (crontab job)
 check=$( echo "$job" | cut -d" " -f 1 )
@@ -683,49 +684,39 @@ freq=$( echo "$job" | cut -d" " -f 1-5 ) # get just the frequency setting
 command=$( echo "$job" | cut -d" " -f 6- ) # get the command part
 fi
 
-id=$( echo "$job" | cut -d"#" -f 2 ) # get the job id number
-command=$( echo "$command" | cut -d"#" -f 1 ) # get rid of the id comment
 freq=$(echo "$job" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
 
 translate $freq # translate the frequency string
 string=$retval # get the return value from the translate method
-string="$id. $string"
+string="$num. $string"
 echo "$string $command"
 echo
-done < newJobList.txt # while loop end
+num=$(($num+1))
+done # while loop end
 return 0 # return 0(false) if there are jobs
 fi
 }
 
 # MAIN:
-i=1 # to create job ids
+# to create keep track of crontab jobs
 key=0 #default key for user input
 
 # pull crontab jobs and display menu, loop until user presses 9 to exit:
 until [ $key -eq 9 2>/dev/null ]
 do
 
-# create/update job list file:
-rm newJobList.txt 2>/dev/null # remove the file if already exists
-i=1 # to count jobs/give them IDs
-echo "$(crontab -l 2>/dev/null )" > jobList.txt # create a temporary file with all crontab jobs
-firstLine=$( cat jobList.txt) #get the content of the crontab job file to check if it's empty
-if [ -z "$firstLine" ] # check if empty
+i=0
+crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
+if [ -z "$crontabList" ] # check if empty
 then
 i=1 # set job count/ID to 1
-echo "" >> newJobList.txt #create an empty file (no jobs)
 else
-line=""
-# a loop to add ids to jobs:
+# a loop to count jobs:
 while IFS= read -r line # loop through the crontab list
 do
-newline="$line #$i" # add an id
-echo "$newline" >> newJobList.txt # save the job to a file
-i=$(($i+1)) # increment id
-done < jobList.txt 
+i=$(($i+1)) # count jobs
+done <<< "$(crontab -l)" # here string to loop through the crontab list   
 fi
-# remove temporary files:
-rm jobList.txt 2>/dev/null
 
 echo 
 menu #display menu
@@ -753,7 +744,6 @@ echo "All jobs were removed."
 i=1 # reset the id to 1 again
 ;;
 9)
-rm newJobList.txt 2>/dev/null # delete the temporary file
 echo "Exit"
 ;;
 *)
