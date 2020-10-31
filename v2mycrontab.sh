@@ -123,8 +123,17 @@ echo
 validInput=0
 until [ $validInput -eq 1 ]
 do
-
-read -p "Enter minutes (0-59): " min
+echo
+echo "Input options:"
+echo "- single specific minute X, enter: X"
+echo "- every minute, enter: *"
+echo "- every X minutes, enter: */X"
+echo "- between X and Y minutes, enter: X-Y"
+echo "- between X and Z, A and B ... enter: X-Z,A-B,..."
+echo "- multiple specific minutes X,Y,Z, enter: X,Y,Z"
+echo "- between X and Y minutes every Z minutes, enter: X-Y/Z"
+echo
+read -p "Enter minutes: " min
 unifyDelimiters "$min" 
 minModified="$retval"
 IFS=',' read -ra arr <<< "$minModified"  # separate user input using commas
@@ -188,7 +197,7 @@ for x in "${arr[@]}"; do  # loop through the user input to validate it
 if [ $x -ge 1 -a $x -le 31 2>/dev/null ]
 then
 validInput=1
-elif [ "$day" = "*" ]
+elif [ "$x" = "*" ]
 then
 validInput=1
 else
@@ -237,7 +246,7 @@ for x in "${arr[@]}"; do  # loop through the user input to validate it
 if [ $x -ge 1 -a $x -le 12 2>/dev/null ] 
 then
 validInput=1
-elif [ "$month" = "*" ]
+elif [ "$x" = "*" ]
 then
 validInput=1
 else
@@ -288,7 +297,7 @@ for x in "${arr[@]}"; do  # loop through the user input to validate it
 if [ $x -ge 0 -a $x -le 7 2>/dev/null  ] 
 then
 validInput=1
-elif [ "$weekday" = "*" ]
+elif [ "$x" = "*" ]
 then
 validInput=1
 else
@@ -565,6 +574,9 @@ retval=$string # return translated job
 getMonth () { #translate month(int) to month(string)
 monthTrans=$1
 
+monthTrans=$(echo ${monthTrans/10/October})
+monthTrans=$(echo ${monthTrans/11/November})
+monthTrans=$(echo ${monthTrans/12/December})
 monthTrans=$(echo ${monthTrans/1/January})
 monthTrans=$(echo ${monthTrans/2/February})
 monthTrans=$(echo ${monthTrans/3/March})
@@ -574,9 +586,6 @@ monthTrans=$(echo ${monthTrans/6/June})
 monthTrans=$(echo ${monthTrans/7/July})
 monthTrans=$(echo ${monthTrans/8/August})
 monthTrans=$(echo ${monthTrans/9/September})
-monthTrans=$(echo ${monthTrans/10/October})
-monthTrans=$(echo ${monthTrans/11/November})
-monthTrans=$(echo ${monthTrans/12/December})
 
 retval=$monthTrans
 }
