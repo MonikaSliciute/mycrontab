@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# set variables
+# set global variables:
 yes="y"
 no="n"
 
-#display menu:
-menu () {
+# a function that displays the program's menu:
+displayMenu () {
 echo "1. Display crontab jobs"
 echo "2. Insert a job"
 echo "3. Edit a job"
@@ -14,8 +14,8 @@ echo "5. Remove all jobs"
 echo "9. Exit"
 }
 
-#insert job
-insert () {
+# a function to insert a new job to crontab file:
+insertJob () {
 id=$1
 echo "Choose a preset or enter a specific frequency: "
 echo
@@ -28,10 +28,10 @@ do
 read -p "Choose one of the above options: " option
 if [ $option -eq 1 ]
 then
-preset_insert 
+presetInsert 
 elif [ $option -eq 2 ]
 then
-custom_insert  
+customInsert  
 else
 echo "Invalid input"
 fi
@@ -40,8 +40,8 @@ done
 freq=$retval # returns a frequency e.g. * * 1 2 3 from preset_insert or custom_insert
 read -p "Enter a command:" command  # command e.g. echo "Hello"
 
-freq_o=$(echo "$freq" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
-translate $freq_o
+freqO=$(echo "$freq" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
+translate $freqO
 string=$retval
 echo "$string $command" # e.g. At every reboot run echo "Hello"
 echo
@@ -63,8 +63,8 @@ fi
 done
 }
 
-#insert job with a preset settings:
-preset_insert () {
+# a function that prompts a user to choose a preset frequency and returns it as a crontab frequency:
+presetInsert () {
 echo "1. Hourly"
 echo "2. Daily"
 echo "3. Weekly"
@@ -112,8 +112,23 @@ strModified=$(echo "$str" | tr '-' ',' | tr '/' ',')
 retval="$strModified"
 }
 
-#insert a job with custom settings:
-custom_insert () {
+# a function to print custom insert options for the user:
+insertOptions () {
+field=$1
+echo
+echo "Input options:"
+echo "- single specific $field X, enter: X"
+echo "- every $field, enter: *"
+echo "- every X "$field"s, enter: */X"
+echo "- between X and Y "$field"s, enter: X-Y"
+echo "- between X and Z, A and B ... enter: X-Z,A-B,..."
+echo "- multiple specific "$field"s X,Y,Z, enter: X,Y,Z"
+echo "- between X and Y "$field"s every Z "$field"s, enter: X-Y/Z"
+echo
+}
+
+# a function that asks the user for a custom frequency and returns it as a crontab frequency:
+customInsert () {
 frequency=""
 
 echo "When would you like the job to occur? Type * for every."
@@ -123,16 +138,7 @@ echo
 validInput=0
 until [ $validInput -eq 1 ]
 do
-echo
-echo "Input options:"
-echo "- single specific minute X, enter: X"
-echo "- every minute, enter: *"
-echo "- every X minutes, enter: */X"
-echo "- between X and Y minutes, enter: X-Y"
-echo "- between X and Z, A and B ... enter: X-Z,A-B,..."
-echo "- multiple specific minutes X,Y,Z, enter: X,Y,Z"
-echo "- between X and Y minutes every Z minutes, enter: X-Y/Z"
-echo
+insertOptions "minute"
 read -p "Enter minutes: " min
 unifyDelimiters "$min" 
 minModified="$retval"
@@ -161,6 +167,7 @@ done
 validInput=0
 until [ $validInput -eq 1 ]
 do
+insertOptions "hour"
 read -p "Enter hour (0-23): " hour
 unifyDelimiters "$hour" 
 hourModified="$retval"
@@ -189,6 +196,7 @@ done
 validInput=0
 until [ $validInput -eq 1 ]
 do
+insertOptions "day"
 read -p "Enter day of the month (1-31): " day
 unifyDelimiters "$day" 
 dayModified="$retval"
@@ -217,6 +225,7 @@ done
 validInput=0
 until [ $validInput -eq 1 ]
 do
+insertOptions "month"
 read -p "Enter month (1-12): " month
 month=$(echo "$month" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [[ "$month" =~ [a-z] ]] && [[ "$month" =~ "-" || "$month" =~ "/" || "$month" =~ "," ]] #input with letters and ranges
@@ -268,6 +277,7 @@ done
 validInput=0
 until [ $validInput -eq 1 ]
 do
+insertOptions "weekday"
 read -p "Enter weekday (0-7 note: 0 and 7 is Sunday): " weekday
 weekday=$(echo "$weekday" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
 if [[ "$weekday" =~ [a-z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]] #input with letters and ranges
@@ -319,7 +329,7 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 }
 
 #edit a job:
-edit () {
+editJob () {
 echo "Choose a job to edit:"
 maxEditID=$1 #last id number to edit
 echo "$maxEditID"
@@ -345,7 +355,7 @@ fi
 }
 
 #remove a job:
-remove () {
+removeJob () {
 echo "Choose a job to remove:"
 maxRemoveID=$1
 displayJobs
@@ -372,9 +382,9 @@ return $number # return a new job id, already incremented
 translate () {
 string=""
 # cases for presets
-freq_o="$1 $2 $3 $4 $5"
+freqO="$1 $2 $3 $4 $5"
 
-case "$freq_o" in
+case "$freqO" in
 "0 o o o o")
 string="At the beginning of every hour, run the following command:"
 ;;
@@ -406,8 +416,8 @@ then
 # custom translate
 count=1 # to count words in frequency string
 
-### e.g. freq_o="1-20 */2 1-3,28 dec fri"
-for word in $freq_o # loop through each word in freqency string
+### e.g. freqO="1-20 */2 1-3,28 dec fri"
+for word in $freqO # loop through each word in freqency string
 do
 
 case $count in
@@ -643,15 +653,14 @@ return 0 # return 0(false) if there are jobs
 fi
 }
 
-# MAIN:
-# to create keep track of crontab jobs
+# MAIN FUNCTION:
 key=0 #default key for user input
 
 # pull crontab jobs and display menu, loop until user presses 9 to exit:
 until [ $key -eq 9 2>/dev/null ]
 do
 
-i=0
+i=0 # to create keep track of crontab jobs
 crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
 if [ -z "$crontabList" ] # check if empty
 then
@@ -663,9 +672,8 @@ do
 i=$(($i+1)) # count jobs
 done <<< "$(crontab -l)" # here string to loop through the crontab list   
 fi
-
 echo 
-menu #display menu
+displayMenu #display menu
 echo
 read -p "Choose an option: " key
 echo "Option chosen: $key"
@@ -676,18 +684,17 @@ case $key in
 displayJobs
 ;;
 2) # insert a new job:
-insert $i # pass a new job id
+insertJob $i # pass a new job id
 ;;
 3) # edit a job:
-edit $i
+editJob $i
 ;;
 4) # remove a job:
-remove $i
+removeJob $i
 ;;
 5) # remove all jobs:
 crontab -r 2>/dev/null 
 echo "All jobs were removed."
-i=1 # reset the id to 1 again
 ;;
 9)
 echo "Exit"
