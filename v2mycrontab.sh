@@ -332,7 +332,6 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 editJob () {
 echo "Choose a job to edit:"
 maxEditID=$1 #last id number to edit
-echo "$maxEditID"
 displayJobs
 noJobs=$?
 if [ $noJobs -eq 1 ] # check if the job list is empty
@@ -346,7 +345,7 @@ read -p "Enter job's number: " number #ask user for a job number to edit
 done
 crontab -l | sed ""$number"d" | crontab - # delete the 'number' line with the job to be deleted
 echo
-insert $number # insert an edited job
+insertJob $number # insert an edited job
 echo
 echo "Job successfully edited."
 echo
