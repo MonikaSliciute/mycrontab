@@ -16,7 +16,6 @@ echo "9. Exit"
 
 # a function to insert a new job to crontab file:
 insertJob () {
-id=$1
 echo "Choose a preset or enter a specific frequency: "
 echo
 echo "1. Preset"
@@ -334,10 +333,8 @@ echo "Choose a job to edit:"
 maxEditID=$1 #last id number to edit
 displayJobs
 noJobs=$?
-if [ $noJobs -eq 1 ] # check if the job list is empty
+if [ $noJobs -eq 0 ] # check if the job list has jobs
 then 
-echo 
-else
 number=0 #default
 until [ $number -ge 1 -a $number -lt $maxEditID 2>/dev/null ]
 do
@@ -349,7 +346,6 @@ insertJob $number # insert an edited job
 echo
 echo "Job successfully edited."
 echo
-
 fi
 }
 
@@ -359,23 +355,19 @@ echo "Choose a job to remove:"
 maxRemoveID=$1
 displayJobs
 noJobs=$? 
-if [ $noJobs -eq 1 ] # check if displayJobs returns a 'no jobs' flag
+if [ $noJobs -eq 0 ] # check if the job list has jobs
 then
-echo # message already generated in displayJobs method
-
-else # jobs exist:
 number=0 # to check if such job exists
 until [ $number -ge 1 -a $number -lt $maxRemoveID 2>/dev/null ]
 do
 read -p "Enter job's number: " number
 done
-
 crontab -l | sed ""$number"d" | crontab -  #delete the line with the job that needs removing
 echo 
 echo "Job successfully removed"
 echo
 fi
-return $number # return a new job id, already incremented
+
 }
 
 translate () {
@@ -683,7 +675,7 @@ case $key in
 displayJobs
 ;;
 2) # insert a new job:
-insertJob $i # pass a new job id
+insertJob 
 ;;
 3) # edit a job:
 editJob $i
