@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set global variables:
+# set variables:
 yes="y"
 no="n"
 
@@ -36,23 +36,23 @@ echo "Invalid input"
 fi
 done
 
-freq=$retval # returns a frequency e.g. * * 1 2 3 from preset_insert or custom_insert
+freq=$retval # returns a frequency e.g. * * 1 2 3 from presetInsert or customInsert
 read -p "Enter a command:" command  # command e.g. echo "Hello"
 
 freqO=$(echo "$freq" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
-translate $freqO
-string=$retval
-echo "$string $command" # e.g. At every reboot run echo "Hello"
+translate $freqO # pass the modified('o' instead of any '*') frequency to the translate function
+string=$retval # get the translated frequency string
+echo "$string $command" # e.g. At every reboot, run the following command: echo "Hello"
 echo
-command="$freq $command" # e.g. * * 1 2 3 echo "Hello"
+newJob="$freq $command" # e.g. * * 1 2 3 echo "Hello" # freq is still the original frequency with unchanged '*'
 
 answer="" # reset answer
 until [ "$answer" = "$yes" -o "$answer" = "$no" 2>/dev/null ] # wait for a valid user input
 do
 read -p "Create the above job? (y/n):" answer
 if [ "$answer" = "$yes" ]
-then
-crontab -l 2>/dev/null | { cat; echo "$command"; } | crontab -
+then # add the newJob to crontab
+crontab -l 2>/dev/null | { cat; echo "$newJob"; } | crontab -
 elif [ "$answer" = "$no" ]
 then
 echo "Job not inserted."
@@ -71,49 +71,49 @@ echo "4. Monthly"
 echo "5. Yearly"
 echo "6. At Reboot"
 
-input=0
-until [ $input -gt 0 -a $input -le 6 2>/dev/null ]
+option=0 # default
+until [ $option -gt 0 -a $option -le 6 2>/dev/null ]
 do
-read -p "Choose one of the above options:" input
-insertTime=""
-case $input in
+read -p "Choose one of the above options:" option
+frequency=""
+case $option in
 1)
-insertTime="0 * * * *"
+frequency="0 * * * *"
 ;;
 2)
-insertTime="0 0 * * *"
+frequency="0 0 * * *"
 ;;
 3)
-insertTime="0 0 * * 0"
+frequency="0 0 * * 0"
 ;;
 4)
-insertTime="0 0 1 * *"
+frequency="0 0 1 * *"
 ;;
 5)
-insertTime="0 0 1 1 *"
+frequency="0 0 1 1 *"
 ;;
 6)
-insertTime="@reboot"
+frequency="@reboot"
 ;;
 *)
 echo "Invalid input. Choose an option between 1-6."
 ;;
 esac
 done
-retval=$insertTime # return frequency e.g. 0 * * * * *
+retval=$frequency # return frequency e.g. 0 * * * * *
 }
 
 # if a user enters a range instead of a single number, unifyDelimiters will change '/' and '-' to ',' 
 # so it is easier to separate the string to validate user input, e.g. '1-23/2' becomes '1,23,2'
 unifyDelimiters () {
-str="$1"
+str="$1" # e.g. 1-23/2
 strModified=$(echo "$str" | tr '-' ',' | tr '/' ',')
-retval="$strModified"
+retval="$strModified" # e.g. 1,23,2
 }
 
 # a function to print custom insert options for the user:
 insertOptions () {
-field=$1
+field=$1 # e.g. "minute", "hour", "day", etc.
 echo
 echo "Input options:"
 echo "- single specific $field X, enter: X"
@@ -134,16 +134,16 @@ echo "When would you like the job to occur? Type * for every."
 echo
 
 # INPUT MINUTES:
-validInput=0
-until [ $validInput -eq 1 ]
+validInput=0 # validInput set to false (0) by default
+until [ $validInput -eq 1 ] # until the input is valid (1)
 do
-insertOptions "minute"
-read -p "Enter minutes: " min
+insertOptions "minute" # display insert options for minutes
+read -p "Enter minutes (1-59): " min
 unifyDelimiters "$min" 
-minModified="$retval"
+minModified="$retval" # get minutes with all delimiters as ','
 IFS=',' read -ra arr <<< "$minModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
-if [ $x -ge 0 -a $x -le 59 2>/dev/null ]  #check if x is a number and valid
+if [ $x -ge 0 -a $x -le 59 2>/dev/null ]  # check if x (minute) is a number and valid
 then
 validInput=1
 elif [ "$x" = "*" ]
@@ -152,27 +152,27 @@ validInput=1
 else
 validInput=0
 echo "Invalid input, try again."
-break
+break # invalid input has been found, user needs to re-enter the minutes
 fi
 done
 
-if [ $validInput -eq 1 ]
+if [ $validInput -eq 1 ] # if the input is valid
 then
 frequency="$min" # save the frequency
 fi
 done
 
 # INPUT HOURS:
-validInput=0
-until [ $validInput -eq 1 ]
+validInput=0 # validInput set to false (0) by default
+until [ $validInput -eq 1 ] # until the input is valid (1)
 do
-insertOptions "hour"
+insertOptions "hour"  # display insert options for hours
 read -p "Enter hour (0-23): " hour
 unifyDelimiters "$hour" 
-hourModified="$retval"
+hourModified="$retval" # get hours with all delimiters as ','
 IFS=',' read -ra arr <<< "$hourModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
-if [ $x -ge 0 -a $x -le 23 2>/dev/null ] # check if hour is a number and valid
+if [ $x -ge 0 -a $x -le 23 2>/dev/null ] # check if x (hour) is a number and valid
 then
 validInput=1
 elif [ "$x" = "*" ]
@@ -181,27 +181,27 @@ validInput=1
 else
 validInput=0
 echo "Invalid input, try again."
-break
+break # invalid input has been found, user needs to re-enter the hours
 fi
 done
 
-if [ $validInput -eq 1 ]
+if [ $validInput -eq 1 ] # if the input is valid
 then
-frequency="$frequency $hour"
+frequency="$frequency $hour" # add the hours to the frequency
 fi
 done
 
 # INPUT DAY OF THE MONTH:
-validInput=0
-until [ $validInput -eq 1 ]
+validInput=0 # validInput set to false (0) by default
+until [ $validInput -eq 1 ] # until the input is valid (1)
 do
-insertOptions "day"
+insertOptions "day" # display insert options for days
 read -p "Enter day of the month (1-31): " day
 unifyDelimiters "$day" 
-dayModified="$retval"
+dayModified="$retval" # get days with all delimiters as ','
 IFS=',' read -ra arr <<< "$dayModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
-if [ $x -ge 1 -a $x -le 31 2>/dev/null ]
+if [ $x -ge 1 -a $x -le 31 2>/dev/null ] # check if x (day) is a number and valid
 then
 validInput=1
 elif [ "$x" = "*" ]
@@ -210,45 +210,49 @@ validInput=1
 else
 validInput=0
 echo "Invalid input, try again."
-break
+break # invalid input has been found, user needs to re-enter the days
 fi
 done
 
-if [ $validInput -eq 1 ]
+if [ $validInput -eq 1 ] # if the input is valid
 then
-frequency="$frequency $day"
+frequency="$frequency $day" # add the days to the frequency
 fi 
 done
 
 # INPUT MONTH:
-validInput=0
-until [ $validInput -eq 1 ]
+validInput=0 # validInput set to false (0) by default
+until [ $validInput -eq 1 ] # until the input is valid (1)
 do
-insertOptions "month"
-read -p "Enter month (1-12): " month
-month=$(echo "$month" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
-if [[ "$month" =~ [a-z] ]] && [[ "$month" =~ "-" || "$month" =~ "/" || "$month" =~ "," ]] #input with letters and ranges
+insertOptions "month" # display insert options for months
+read -p "Enter month (1-12; jan-dec): " month # display insert options for months
+
+month=$(echo "$month" | tr '[:upper:]' '[:lower:]' 2>/dev/null ) # translate the month to lowercase (in case it is a string)
+
+# case: input with letters AND ranges or lists -> invalid
+if [[ "$month" =~ [a-z] ]] && [[ "$month" =~ "-" || "$month" =~ "/" || "$month" =~ "," ]]
 then
 echo "You cannot use ranges and lists with month names."
 validInput=0
 
-elif [[ "$month" =~ [a-z] ]] # input with just letters
+# case: input with just letters
+elif [[ "$month" =~ [a-z] ]]
 then
-monthLower=$(echo "$month" | tr '[:upper:]' '[:lower:]')
 monthList=("jan" "feb" "mar" "apr" "may" "jun" "jul" "aug" "sep" "oct" "nov" "dec")
-for j in ${!monthList[@]};
+for j in ${!monthList[@]}; # loop through the monthList
 do
 item=${monthList[$j]}
-if [ "$monthLower" = "$item" ] 
+if [ "$month" = "$item" ]
 then
 validInput=1 
-break #found the right value
+break #found the right/matching value
 fi 
 done
 
-else # input with numbers and/or ranges:
+# case: input with numbers and/or ranges:
+else
 unifyDelimiters "$month" 
-monthModified="$retval"
+monthModified="$retval" # get months with all delimiters as ','
 IFS=',' read -ra arr <<< "$monthModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
 if [ $x -ge 1 -a $x -le 12 2>/dev/null ] 
@@ -259,48 +263,51 @@ then
 validInput=1
 else
 validInput=0
-break
+break  # invalid input has been found, user needs to re-enter the month
 fi 
 done
 fi 
 
-if [ $validInput -eq 1 ] 
+if [ $validInput -eq 1 ] # if the input is valid
 then
-frequency="$frequency $month"
+frequency="$frequency $month" # add the months to the frequency
 else
 echo "Invalid input, try again."
 fi 
 done
 
 # INPUT WEEKDAYS:
-validInput=0
-until [ $validInput -eq 1 ]
+validInput=0 # validInput set to false (0) by default
+until [ $validInput -eq 1 ] # until the input is valid (1)
 do
-insertOptions "weekday"
-read -p "Enter weekday (0-7 note: 0 and 7 is Sunday): " weekday
-weekday=$(echo "$weekday" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
-if [[ "$weekday" =~ [a-z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]] #input with letters and ranges
+insertOptions "weekday" # display insert options for weekdays
+read -p "Enter weekday (0-7; mon-sun note: 0 and 7 is Sunday): " weekday
+weekday=$(echo "$weekday" | tr '[:upper:]' '[:lower:]' 2>/dev/null )  # translate the weekday to lowercase (in case it is a string)
+
+# case: input with letters AND ranges -> invalid
+if [[ "$weekday" =~ [a-z] ]] && [[ "$weekday" =~ "-" || "$weekday" =~ "/" || "$weekday" =~ "," ]]
 then
 echo "You cannot use ranges and lists with weekday names."
 validInput=0
 
-elif [[ "$weekday" =~ [a-z] ]] # input with just letters
+# case: input with just letters
+elif [[ "$weekday" =~ [a-z] ]]
 then
-weekdayLower=$(echo "$weekday" | tr '[:upper:]' '[:lower:]')
 dayList=("sun" "mon" "tue" "wed" "thu" "fri" "sat")
-for j in ${!dayList[@]};
+for j in ${!dayList[@]};  # loop through the dayList
 do
 item=${dayList[$j]}
-if [ "$weekdayLower" = "$item" ] 
+if [ "$weekday" = "$item" ]
 then
 validInput=1 
-break #found the right value
-fi #2
+break  #found the right/matching value
+fi
 done
 
-else # input with numbers and/or ranges:
+# case: input with numbers and/or ranges:
+else
 unifyDelimiters "$weekday" 
-dayModified="$retval"
+dayModified="$retval"  # get weekdays with all delimiters as ','
 IFS=',' read -ra arr <<< "$dayModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
 if [ $x -ge 0 -a $x -le 7 2>/dev/null  ] 
@@ -311,14 +318,14 @@ then
 validInput=1
 else
 validInput=0
-break
+break # invalid input has been found, user needs to re-enter the weekday
 fi 
 done
 fi 
 
-if [ $validInput -eq 1 ] 
+if [ $validInput -eq 1 ] # if the input is valid
 then
-frequency="$frequency $weekday"
+frequency="$frequency $weekday" # add the weekday to the frequency
 else
 echo "Invalid input, try again."
 fi 
@@ -664,7 +671,7 @@ key=0 #default key for user input
 # display menu, loop until user presses 9 to exit:
 until [ $key -eq 9 2>/dev/null ]
 do
-
+echo
 displayMenu #display menu
 echo
 read -p "Choose an option: " key
