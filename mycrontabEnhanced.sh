@@ -550,7 +550,7 @@ if [[ "$weekdayBeforeSlash" =~ "-" ]]
 then # range case:
 getWeekday $weekdayBeforeSlash # translate all weekdays to weekday names
 weekdayTrans=$retval # get the translated string
-string="$string between weekdays $weekdayBeforeSlash every $monthAfterSlash days"
+string="$string between weekdays $weekdayBeforeSlash every $weekdayAfterSlash days"
 else # star case:
 string="$string every $weekdayAfterSlash days"
 fi
