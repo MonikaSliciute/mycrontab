@@ -27,10 +27,10 @@ do
 read -p "Choose one of the above options: " option
 if [ $option -eq 1 ]
 then
-presetInsert 
+presetInsert
 elif [ $option -eq 2 ]
 then
-customInsert  
+customInsert
 else
 echo "Invalid input"
 fi
@@ -103,7 +103,7 @@ done
 retval=$frequencyPreset # return frequency e.g. 0 * * * * *
 }
 
-# if a user enters a range instead of a single number, unifyDelimiters will change '/' and '-' to ',' 
+# if a user enters a range instead of a single number, unifyDelimiters will change '/' and '-' to ','
 # so it is easier to separate the string to validate user input, e.g. '1-23/2' becomes '1,23,2'
 unifyDelimiters () {
 str="$1" # e.g. 1-23/2
@@ -139,7 +139,7 @@ until [ $validInput -eq 1 ] # until the input is valid (1)
 do
 insertOptions "minute" # display insert options for minutes
 read -p "Enter minutes (0-59): " min
-unifyDelimiters "$min" 
+unifyDelimiters "$min"
 minModified="$retval" # get minutes with all delimiters as ','
 IFS=',' read -ra arr <<< "$minModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
@@ -168,7 +168,7 @@ until [ $validInput -eq 1 ] # until the input is valid (1)
 do
 insertOptions "hour"  # display insert options for hours
 read -p "Enter hour (0-23): " hour
-unifyDelimiters "$hour" 
+unifyDelimiters "$hour"
 hourModified="$retval" # get hours with all delimiters as ','
 IFS=',' read -ra arr <<< "$hourModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
@@ -197,7 +197,7 @@ until [ $validInput -eq 1 ] # until the input is valid (1)
 do
 insertOptions "day" # display insert options for days
 read -p "Enter day of the month (1-31): " day
-unifyDelimiters "$day" 
+unifyDelimiters "$day"
 dayModified="$retval" # get days with all delimiters as ','
 IFS=',' read -ra arr <<< "$dayModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
@@ -217,7 +217,7 @@ done
 if [ $validInput -eq 1 ] # if the input is valid
 then
 frequency="$frequency $day" # add the days to the frequency
-fi 
+fi
 done
 
 # INPUT MONTH:
@@ -244,18 +244,18 @@ do
 item=${monthList[$j]}
 if [ "$month" = "$item" ]
 then
-validInput=1 
+validInput=1
 break #found the right/matching value
-fi 
+fi
 done
 
 # case: input with numbers and/or ranges:
 else
-unifyDelimiters "$month" 
+unifyDelimiters "$month"
 monthModified="$retval" # get months with all delimiters as ','
 IFS=',' read -ra arr <<< "$monthModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
-if [ $x -ge 1 -a $x -le 12 2>/dev/null ] 
+if [ $x -ge 1 -a $x -le 12 2>/dev/null ]
 then
 validInput=1
 elif [ "$x" = "*" ]
@@ -264,16 +264,16 @@ validInput=1
 else
 validInput=0
 break  # invalid input has been found, user needs to re-enter the month
-fi 
+fi
 done
-fi 
+fi
 
 if [ $validInput -eq 1 ] # if the input is valid
 then
 frequency="$frequency $month" # add the months to the frequency
 else
 echo "Invalid input, try again."
-fi 
+fi
 done
 
 # INPUT WEEKDAYS:
@@ -299,18 +299,18 @@ do
 item=${dayList[$j]}
 if [ "$weekday" = "$item" ]
 then
-validInput=1 
+validInput=1
 break  #found the right/matching value
 fi
 done
 
 # case: input with numbers and/or ranges:
 else
-unifyDelimiters "$weekday" 
+unifyDelimiters "$weekday"
 dayModified="$retval"  # get weekdays with all delimiters as ','
 IFS=',' read -ra arr <<< "$dayModified"  # separate user input using commas
 for x in "${arr[@]}"; do  # loop through the user input to validate it
-if [ $x -ge 0 -a $x -le 7 2>/dev/null  ] 
+if [ $x -ge 0 -a $x -le 7 2>/dev/null  ]
 then
 validInput=1
 elif [ "$x" = "*" ]
@@ -319,16 +319,16 @@ validInput=1
 else
 validInput=0
 break # invalid input has been found, user needs to re-enter the weekday
-fi 
+fi
 done
-fi 
+fi
 
 if [ $validInput -eq 1 ] # if the input is valid
 then
 frequency="$frequency $weekday" # add the weekday to the frequency
 else
 echo "Invalid input, try again."
-fi 
+fi
 done
 
 retval=$frequency # return frequency e.g. 1 2 3 * *
@@ -340,7 +340,7 @@ echo "Choose a job to edit:"
 displayJobs # displays all jobs in crontab
 totalJobs=$? # number of current jobs
 if [ $totalJobs -ne 0 ] # check if the job list has jobs
-then 
+then
 selectedJob=0 # default, for checking if such job exists
 # until a user select a job that is in the crontab
 until [ $selectedJob -ge 1 -a $selectedJob -le $totalJobs 2>/dev/null ]
@@ -370,7 +370,7 @@ do
 read -p "Enter job's number: " selectedJob # ask user for a job number to remove
 done
 crontab -l | sed ""$selectedJob"d" | crontab -  # delete the line with the job that needs to be removed
-echo 
+echo
 echo "Job successfully removed"
 echo
 fi
@@ -520,8 +520,8 @@ fi
 # case: if user input was a 3 letter month name
 elif [[ "$word" =~ [a-z] ]]
 then
-# translate it to upper case for displaying
-word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
+fullMonth "$word"
+word=$retval # get the full month name
 string="$string in $word"
 
 # case: single value, lists, range, multiple ranges:
@@ -550,7 +550,7 @@ if [[ "$weekdayBeforeSlash" =~ "-" ]]
 then # range case:
 getWeekday $weekdayBeforeSlash # translate all weekdays to weekday names
 weekdayTrans=$retval # get the translated string
-string="$string between weekdays $weekdayBeforeSlash every $monthAfterSlash days"
+string="$string between weekdays $weekdayBeforeSlash every $weekdayAfterSlash days"
 else # star case:
 string="$string every $weekdayAfterSlash days"
 fi
@@ -558,8 +558,8 @@ fi
 # if user input was a 3 letter weekday name
 elif [[ "$word" =~ [a-z] ]]
 then
-# translate it to upper case for displaying
-word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
+fullWeekday "$word"
+word=$retval # get the full weekday name
 string="$string on $word"
 
 # case: single value, lists, range, multiple ranges:
@@ -581,7 +581,7 @@ fi # end of if custom
 
 retval=$string # return translated job
 }
-getMonth () { #translate month(int) to month(string)
+getMonth () { # translate month(int) to month(string)
 monthTrans=$1
 
 monthTrans=$(echo ${monthTrans/10/October})
@@ -600,7 +600,7 @@ monthTrans=$(echo ${monthTrans/9/September})
 retval=$monthTrans
 }
 
-getWeekday () { #translate weekday(int) to weekday(string)
+getWeekday () { # translate weekday(int) to weekday(string)
 weekdayTrans=$1
 
 weekdayTrans=$(echo ${weekdayTrans/1/Monday})
@@ -613,6 +613,39 @@ weekdayTrans=$(echo ${weekdayTrans/7/Sunday})
 weekdayTrans=$(echo ${weekdayTrans/0/Sunday})
 
 retval=$weekdayTrans
+}
+
+fullMonth () { # translate 3 letter month to full month name
+shortMonth=$1
+
+shortMonth=$(echo ${shortMonth/jan/January})
+shortMonth=$(echo ${shortMonth/feb/February})
+shortMonth=$(echo ${shortMonth/mar/March})
+shortMonth=$(echo ${shortMonth/apr/April})
+shortMonth=$(echo ${shortMonth/may/May})
+shortMonth=$(echo ${shortMonth/jun/June})
+shortMonth=$(echo ${shortMonth/jul/July})
+shortMonth=$(echo ${shortMonth/aug/August})
+shortMonth=$(echo ${shortMonth/sep/September})
+shortMonth=$(echo ${shortMonth/oct/October})
+shortMonth=$(echo ${shortMonth/nov/November})
+shortMonth=$(echo ${shortMonth/dec/December})
+
+retval=$shortMonth
+}
+
+fullWeekday () { # translate 3 letter weekday to full weekday name
+shortWeekday=$1
+
+shortWeekday=$(echo ${shortWeekday/mon/Monday})
+shortWeekday=$(echo ${shortWeekday/tue/Tuesday})
+shortWeekday=$(echo ${shortWeekday/wed/Wednesday})
+shortWeekday=$(echo ${shortWeekday/thu/Thursday})
+shortWeekday=$(echo ${shortWeekday/fri/Friday})
+shortWeekday=$(echo ${shortWeekday/sat/Saturday})
+shortWeekday=$(echo ${shortWeekday/sun/Sunday})
+
+retval=$shortWeekday
 }
 
 # if there are jobs:
@@ -630,7 +663,7 @@ jobCount=0 # initialise jobCount to 0
 if [ -z "$crontabFile" ] # check if empty
 then
 echo "There are no crontab jobs."
-return 0 
+return 0
 
 # if there are crontab jobs
 else
@@ -655,7 +688,7 @@ freq=$(echo "$job" | tr '*' o) # swap all asterisks to 'o' to avoid issues with 
 
 translate $freq # translate the frequency string
 string=$retval # get the return value from the translate method
-jobCount=$(($jobCount+1)) # increment jobCount 
+jobCount=$(($jobCount+1)) # increment jobCount
 string="$jobCount. $string"
 echo "$string $command"
 echo
@@ -683,7 +716,7 @@ case $key in
 displayJobs
 ;;
 2) # insert a new job:
-insertJob 
+insertJob
 ;;
 3) # edit a job:
 editJob
@@ -692,7 +725,7 @@ editJob
 removeJob
 ;;
 5) # remove all jobs:
-crontab -r 2>/dev/null 
+crontab -r 2>/dev/null
 echo "All jobs were removed."
 ;;
 9)
