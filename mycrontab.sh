@@ -138,7 +138,7 @@ validInput=0 # validInput set to false (0) by default
 until [ $validInput -eq 1 ] # until the input is valid (1)
 do
 insertOptions "minute" # display insert options for minutes
-read -p "Enter minutes (1-59): " min
+read -p "Enter minutes (0-59): " min
 unifyDelimiters "$min" 
 minModified="$retval" # get minutes with all delimiters as ','
 IFS=',' read -ra arr <<< "$minModified"  # separate user input using commas
