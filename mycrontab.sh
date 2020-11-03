@@ -725,7 +725,7 @@ editJob
 removeJob
 ;;
 5) # remove all jobs:
-if [ -z $( crontab -l 2>/dev/null) ] # if the crontab is empty
+if [ -z "$( crontab -l 2>/dev/null)" ] # if the crontab is empty
 then
 echo "There are no jobs to remove"
 else # if there are jobs
