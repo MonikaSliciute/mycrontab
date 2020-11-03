@@ -330,17 +330,17 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 #edit a job:
 editJob () {
 echo "Choose a job to edit:"
-maxEditID=$1 #last id number to edit
-displayJobs
-noJobs=$?
-if [ $noJobs -eq 0 ] # check if the job list has jobs
+displayJobs # displays all jobs in crontab
+totalJobs=$? # number of current jobs
+if [ $totalJobs -ne 0 ] # check if the job list has jobs
 then 
-number=0 #default
-until [ $number -ge 1 -a $number -le $maxEditID 2>/dev/null ]
+selectedJob=0 # default, for checking if such job exists
+# until a user select a job that is in the crontab
+until [ $selectedJob -ge 1 -a $selectedJob -le $totalJobs 2>/dev/null ]
 do
-read -p "Enter job's number: " number #ask user for a job number to edit
+read -p "Enter job's number: " selectedJob # ask user for a job number to edit
 done
-crontab -l | sed ""$number"d" | crontab - # delete the 'number' line with the job to be deleted
+crontab -l | sed ""$selectedJob"d" | crontab - # delete the 'selectedJob' line with the job to be deleted
 echo
 insertJob # insert an edited job
 echo
@@ -352,17 +352,17 @@ fi
 #remove a job:
 removeJob () {
 echo "Choose a job to remove:"
-maxRemoveID=$1
-displayJobs
-noJobs=$? 
-if [ $noJobs -eq 0 ] # check if the job list has jobs
+displayJobs # displays all jobs in crontab
+totalJobs=$? # number of current jobs
+if [ $totalJobs -ne 0 ] # check if the job list has jobs
 then
-number=0 # to check if such job exists
-until [ $number -ge 1 -a $number -le $maxRemoveID 2>/dev/null ]
+selectedJob=0 # default, for checking if such job exists
+# until a user select a job that is in the crontab
+until [ $selectedJob -ge 1 -a $selectedJob -le $totalJobs 2>/dev/null ]
 do
-read -p "Enter job's number: " number
+read -p "Enter job's number: " selectedJob # ask user for a job number to remove
 done
-crontab -l | sed ""$number"d" | crontab -  #delete the line with the job that needs removing
+crontab -l | sed ""$selectedJob"d" | crontab -  # delete the line with the job that needs to be removed
 echo 
 echo "Job successfully removed"
 echo
@@ -371,10 +371,10 @@ fi
 }
 
 translate () {
-string=""
-# cases for presets
-freqO="$1 $2 $3 $4 $5"
+string="" # create an empty string (for storing the translated frequency)
+freqO="$1 $2 $3 $4 $5" # frequency string (value(s) passed to the translate function)
 
+# cases for translating presets
 case "$freqO" in
 "0 o o o o")
 string="At the beginning of every hour, run the following command:"
@@ -395,131 +395,153 @@ string="At the beginning of every year, run the following command:"
 ;;
 esac
 
-# translation for special presets
-if [ "$1" = "@reboot" ]
+# case for translating special preset (@reboot)
+if [ "$1" = "@reboot" ] # only the first field is used for frequency in this case
 then
 string="At every reboot, run the following command:"
 fi
 
-# custom
-if [ "$string" = "" ]
+# cases for translating custom frequencies
+if [ "$string" = "" ] # if the translation string is still empty (preset translations were not applicable)
 then
 # custom translate
 count=1 # to count words in frequency string
 
-### e.g. freqO="1-20 */2 1-3,28 dec fri"
+### e.g. freqO="1-20 o/2 1-3,28 dec fri"
 for word in $freqO # loop through each word in freqency string
 do
 
-case $count in
+case $count in # count=1->minutes, count=2->hours...
 1) # MINUTES:
+# case: every minute
 if [ $word = "o" ] # if it used to be an asterisk
 then
 string="At every minute"
 
+# case: every X minutes
 elif [[ "$word" =~ "/" ]]
 then
 ### split before and after '/'
 minAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 minBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$minBeforeSlash" =~ "-" ]]
-then # range case:
+then # single range case:
 string="Between $minBeforeSlash minutes every $minAfterSlash minutes"
 else # star case:
 string="Every $minAfterSlash minutes"
 fi
-
-else # single value:
+# case: single value, list, range
+else
 string="At minute(s) $word"
 fi
 ;;
 
 2) # HOURS:
+# case: every hour
 if [ $word = "o" ]
 then
 string="$string every hour"
 
+# case: every X hours
 elif [[ "$word" =~ "/" ]]
 then
 ### split before and after '/'
 hourAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 hourBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$hourBeforeSlash" =~ "-" ]]
-then
+then # single range case:
 string="$string between $hourBeforeSlash hours every $hourAfterSlash hours"
-else
+else # star case:
 string="$string every $hourAfterSlash hours"
 fi
 
+# case: single value, list, range
 else
 string="$string past hour(s) $word"
 fi
 ;;
 
 3) # DAY:
+# case: every day
 if [ $word = "o" ]
 then
 string="$string on every day"
+
+# case: every X days
 elif [[ "$word" =~ "/" ]]
 then
 ### split before and after '/'
 dayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 dayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$dayBeforeSlash" =~ "-" ]]
-then
+then # single range case:
 string="$string between days $dayBeforeSlash every $dayAfterSlash days"
-else
+else # star case:
 string="$string every $dayAfterSlash days"
 fi
 
+# case: single value, list, range
 else
 string="$string on day(s) $word"
 fi
 ;;
 
 4) # MONTH:
+# in case user's input was a string, translate to lowercase
 word=$(echo "$word" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
+
+# case: every month
 if [ $word = "o" ]
 then
 string="$string every month"
+
+# case: every X months
 elif [[ "$word" =~ "/" ]]
 then
 ### split before and after '/'
 monthAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 monthBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$monthBeforeSlash" =~ "-" ]]
-then
+then # single range case:
 ### split before and after '-'
 m1=$(echo "$monthBeforeSlash" | cut -d'-' -f 1)
 m2=$(echo "$monthBeforeSlash" | cut -d'-' -f 2)
-getMonth $m1
-m1=$retval
-getMonth $m2
-m2=$retval
+getMonth $m1 # translate first month
+m1=$retval # get first monthname
+getMonth $m2 # translate second month
+m2=$retval # get second monthname
 string="$string between months $m1 and $m2 every $monthAfterSlash months"
-else
+else # star case:
 string="$string every $monthAfterSlash months"
 fi
-# if there's a range or a list
+
+# case: if there's a range or a list
 elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 then
-getMonth $word
-monthTrans=$retval
+getMonth $word # translate all numbers to month names
+monthTrans=$retval # get the translated string
 string="$string in $monthTrans"
 
+# case: if user input was a 3 letter month name
 elif [[ "$word" =~ [a-z] ]]
 then
+# translate it to upper case for displaying
+word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
 string="$string in $word"
 
+# case: single value, list, range
 else
-getMonth $word # call get month and pass month(int)
-monthTrans=$retval # get the return value
+getMonth $word # translate all numeric values to month names
+monthTrans=$retval # get the translated string
 string="$string in month $monthTrans"
 fi
 ;;
 
 5) # WEEKDAY:
+# in case user's input was a string, translate to lowercase
 word=$(echo "$word" | tr '[:upper:]' '[:lower:]' 2>/dev/null )
+
+# case: every weekday
 if [ $word = "o" ]
 then
 string="$string every weekday"
@@ -530,33 +552,37 @@ then
 weekdayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 weekdayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$weekdayBeforeSlash" =~ "-" ]]
-then
+then # single range case:
 ### split before and after '-'
 w1=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 1)
 w2=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 2)
-getWeekday $w1
-w1=$retval
-getWeekday $w2
-w2=$retval
+getWeekday $w1 # translate first weekday
+w1=$retval # get first weekday name
+getWeekday $w2 # translate second weekday
+w2=$retval # get second weekday name
 string="$string between weekdays $w1 and $w2 every $monthAfterSlash days"
-else
+else # star case:
 string="$string every $weekdayAfterSlash days"
 fi
 
 # if there's a range or a list
 elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
 then
-getWeekday $word
-weekdayTrans=$retval
+getWeekday $word # translate all weekdays to weekday names
+weekdayTrans=$retval # get the translated string
 string="$string on $weekdayTrans"
 
+# if user input was a 3 letter weekday name
 elif [[ "$word" =~ [a-z] ]]
 then
+# translate it to upper case for displaying
+word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
 string="$string on $word"
 
+# case: single value, list, range
 else
-getWeekday $word # call getWeekday with weekday(int)
-weekdayTrans=$retval # get the return value: weekday(string)
+getWeekday $word # translate all numeric values to weekday names
+weekdayTrans=$retval # get the translated string
 string="$string on $weekdayTrans"
 fi
 ;;
@@ -606,26 +632,36 @@ weekdayTrans=$(echo ${weekdayTrans/0/Sunday})
 retval=$weekdayTrans
 }
 
-
+# if there are jobs:
+#   displays all jobs (translated and numbered),
+#   returns the number of current jobs;
+# if there are no jobs:
+#   displays a message saying "There are no crontab jobs",
+#   returns 0 as the number of current jobs;
 displayJobs () {
 
 crontabFile=$( crontab -l 2>/dev/null ) #get the content of the crontab job file to check if it's empty
-num=1
+jobCount=0 # initialise jobCount to 0
+
+# if there are no crontab jobs
 if [ -z "$crontabFile" ] # check if empty
 then
 echo "There are no crontab jobs."
-return 1 # return 1(true) if there are no jobs
 
+# if there are crontab jobs
 else
 echo "Current crontab jobs:"
 crontab -l | while IFS= read -r line # loop through the crontab file
 do
 job="$line" # get a single line from a file (crontab job)
+
+# if the first field is "@reboot"
 check=$( echo "$job" | cut -d" " -f 1 )
 if [ "$check" = "@reboot" ]
 then
 freq=$check
 command=$( echo "$job" | cut -d" " -f 2- ) # get the command part
+# if there are 5 fields for frequency
 else
 freq=$( echo "$job" | cut -d" " -f 1-5 ) # get just the frequency setting
 command=$( echo "$job" | cut -d" " -f 6- ) # get the command part
@@ -635,13 +671,15 @@ freq=$(echo "$job" | tr '*' o) # swap all asterisks to 'o' to avoid issues with 
 
 translate $freq # translate the frequency string
 string=$retval # get the return value from the translate method
-string="$num. $string"
+jobCount=$(($jobCount+1)) # increment jobCount (##### TEST IF IT WORKS)
+string="$jobCount. $string"
 echo "$string $command"
 echo
-num=$(($num+1))
+# jobCount=$(($jobCount+1)) # increment jobCount
 done # while loop end
-return 0 # return 0(false) if there are jobs
 fi
+
+return jobCount # return the number of jobs in the crontab
 }
 
 # MAIN FUNCTION:
@@ -651,19 +689,24 @@ key=0 #default key for user input
 until [ $key -eq 9 2>/dev/null ]
 do
 
-i=-1 # to create keep track of crontab jobs
-crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
-if [ -z "$crontabList" ] # check if empty
-then
-i=0 # set job count/ID to 0
-else
-# a loop to count jobs:
-while IFS= read -r line # loop through the crontab list
-do
-i=$(($i+1)) # count jobs
-done <<< "$(crontab -l)" # here string to loop through the crontab list   
-fi
-echo 
+#i=-1 # to create keep track of crontab jobs
+#crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
+#if [ -z "$crontabList" ] # check if empty
+#then
+#i=0 # set job count/ID to 0
+#else
+## a loop to count jobs:
+#while IFS= read -r line # loop through the crontab list
+#do
+#i=$(($i+1)) # count jobs
+#done <<< "$(crontab -l)" # here string to loop through the crontab list
+#fi
+#echo
+
+
+displayJobs # redirect output to /dev/null? so that it doesn't display the jobs and just counts them
+#totalJobs=$? # get the number of current jobs from displayJobs
+
 displayMenu #display menu
 echo
 read -p "Choose an option: " key
@@ -678,10 +721,10 @@ displayJobs
 insertJob 
 ;;
 3) # edit a job:
-editJob $i
+editJob
 ;;
 4) # remove a job:
-removeJob $i
+removeJob
 ;;
 5) # remove all jobs:
 crontab -r 2>/dev/null 
