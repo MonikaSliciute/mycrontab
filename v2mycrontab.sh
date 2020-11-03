@@ -342,7 +342,7 @@ read -p "Enter job's number: " number #ask user for a job number to edit
 done
 crontab -l | sed ""$number"d" | crontab - # delete the 'number' line with the job to be deleted
 echo
-insertJob $number # insert an edited job
+insertJob # insert an edited job
 echo
 echo "Job successfully edited."
 echo
@@ -423,13 +423,13 @@ then
 minAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 minBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$minBeforeSlash" =~ "-" ]]
-then
+then # range case:
 string="Between $minBeforeSlash minutes every $minAfterSlash minutes"
-else
+else # star case:
 string="Every $minAfterSlash minutes"
 fi
 
-else
+else # single value:
 string="At minute(s) $word"
 fi
 ;;
@@ -509,7 +509,7 @@ string="$string in $monthTrans"
 
 elif [[ "$word" =~ [a-z] ]]
 then
-string="$string on $word"
+string="$string in $word"
 
 else
 getMonth $word # call get month and pass month(int)
@@ -655,7 +655,7 @@ i=0 # to create keep track of crontab jobs
 crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
 if [ -z "$crontabList" ] # check if empty
 then
-i=1 # set job count/ID to 1
+i=1 # set job count/ID to 1 # ?? maybe 0
 else
 # a loop to count jobs:
 while IFS= read -r line # loop through the crontab list
