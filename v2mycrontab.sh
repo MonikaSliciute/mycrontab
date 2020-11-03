@@ -336,7 +336,7 @@ noJobs=$?
 if [ $noJobs -eq 0 ] # check if the job list has jobs
 then 
 number=0 #default
-until [ $number -ge 1 -a $number -lt $maxEditID 2>/dev/null ]
+until [ $number -ge 1 -a $number -le $maxEditID 2>/dev/null ]
 do
 read -p "Enter job's number: " number #ask user for a job number to edit
 done
@@ -358,7 +358,7 @@ noJobs=$?
 if [ $noJobs -eq 0 ] # check if the job list has jobs
 then
 number=0 # to check if such job exists
-until [ $number -ge 1 -a $number -lt $maxRemoveID 2>/dev/null ]
+until [ $number -ge 1 -a $number -le $maxRemoveID 2>/dev/null ]
 do
 read -p "Enter job's number: " number
 done
@@ -651,11 +651,11 @@ key=0 #default key for user input
 until [ $key -eq 9 2>/dev/null ]
 do
 
-i=0 # to create keep track of crontab jobs
+i=-1 # to create keep track of crontab jobs
 crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
 if [ -z "$crontabList" ] # check if empty
 then
-i=1 # set job count/ID to 1 # ?? maybe 0
+i=0 # set job count/ID to 0
 else
 # a loop to count jobs:
 while IFS= read -r line # loop through the crontab list
