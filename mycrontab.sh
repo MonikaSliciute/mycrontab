@@ -70,37 +70,37 @@ echo "3. Weekly"
 echo "4. Monthly"
 echo "5. Yearly"
 echo "6. At Reboot"
-
-option=0 # default
-until [ $option -gt 0 -a $option -le 6 2>/dev/null ]
+echo
+input=0 # default
+until [ $input -gt 0 -a $input -le 6 2>/dev/null ]
 do
-read -p "Choose one of the above options:" option
-frequency=""
-case $option in
+read -p "Choose one of the above options:" input
+frequencyPreset=""
+case $input in
 1)
-frequency="0 * * * *"
+frequencyPreset="0 * * * *"
 ;;
 2)
-frequency="0 0 * * *"
+frequencyPreset="0 0 * * *"
 ;;
 3)
-frequency="0 0 * * 0"
+frequencyPreset="0 0 * * 0"
 ;;
 4)
-frequency="0 0 1 * *"
+frequencyPreset="0 0 1 * *"
 ;;
 5)
-frequency="0 0 1 1 *"
+frequencyPreset="0 0 1 1 *"
 ;;
 6)
-frequency="@reboot"
+frequencyPreset="@reboot"
 ;;
 *)
 echo "Invalid input. Choose an option between 1-6."
 ;;
 esac
 done
-retval=$frequency # return frequency e.g. 0 * * * * *
+retval=$frequencyPreset # return frequency e.g. 0 * * * * *
 }
 
 # if a user enters a range instead of a single number, unifyDelimiters will change '/' and '-' to ',' 
