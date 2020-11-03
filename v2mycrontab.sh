@@ -502,25 +502,13 @@ then
 monthAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 monthBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$monthBeforeSlash" =~ "-" ]]
-then # single range case:
-### split before and after '-'
-m1=$(echo "$monthBeforeSlash" | cut -d'-' -f 1)
-m2=$(echo "$monthBeforeSlash" | cut -d'-' -f 2)
-getMonth $m1 # translate first month
-m1=$retval # get first monthname
-getMonth $m2 # translate second month
-m2=$retval # get second monthname
-string="$string between months $m1 and $m2 every $monthAfterSlash months"
+then # ranges case:
+getMonth $monthBeforeSlash # translate all numeric values to month names
+monthTrans=$retval # get the translated string
+string="$string between months $monthTrans every $monthAfterSlash months"
 else # star case:
 string="$string every $monthAfterSlash months"
 fi
-
-# case: if there's a range or a list
-elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
-then
-getMonth $word # translate all numbers to month names
-monthTrans=$retval # get the translated string
-string="$string in $monthTrans"
 
 # case: if user input was a 3 letter month name
 elif [[ "$word" =~ [a-z] ]]
@@ -529,11 +517,11 @@ then
 word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
 string="$string in $word"
 
-# case: single value, list, range
+# case: single value, lists, range, multiple ranges:
 else
 getMonth $word # translate all numeric values to month names
 monthTrans=$retval # get the translated string
-string="$string in month $monthTrans"
+string="$string in $monthTrans"
 fi
 ;;
 
@@ -552,25 +540,13 @@ then
 weekdayAfterSlash=$( echo "$word" | cut -d"/" -f 2 )
 weekdayBeforeSlash=$( echo "$word" | cut -d"/" -f 1 )
 if [[ "$weekdayBeforeSlash" =~ "-" ]]
-then # single range case:
-### split before and after '-'
-w1=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 1)
-w2=$(echo "$weekdayBeforeSlash" | cut -d'-' -f 2)
-getWeekday $w1 # translate first weekday
-w1=$retval # get first weekday name
-getWeekday $w2 # translate second weekday
-w2=$retval # get second weekday name
-string="$string between weekdays $w1 and $w2 every $monthAfterSlash days"
+then # range case:
+getWeekday $weekdayBeforeSlash # translate all weekdays to weekday names
+weekdayTrans=$retval # get the translated string
+string="$string between weekdays $weekdayBeforeSlash every $monthAfterSlash days"
 else # star case:
 string="$string every $weekdayAfterSlash days"
 fi
-
-# if there's a range or a list
-elif [[ "$word" =~ "-" || "$word" =~ "/" || "$word" =~ "," ]]
-then
-getWeekday $word # translate all weekdays to weekday names
-weekdayTrans=$retval # get the translated string
-string="$string on $weekdayTrans"
 
 # if user input was a 3 letter weekday name
 elif [[ "$word" =~ [a-z] ]]
@@ -579,7 +555,7 @@ then
 word=$(echo "$word" | tr '[:lower:]' '[:upper:]' 2>/dev/null )
 string="$string on $word"
 
-# case: single value, list, range
+# case: single value, lists, range, multiple ranges:
 else
 getWeekday $word # translate all numeric values to weekday names
 weekdayTrans=$retval # get the translated string
@@ -647,11 +623,12 @@ jobCount=0 # initialise jobCount to 0
 if [ -z "$crontabFile" ] # check if empty
 then
 echo "There are no crontab jobs."
+return 0 
 
 # if there are crontab jobs
 else
 echo "Current crontab jobs:"
-crontab -l | while IFS= read -r line # loop through the crontab file
+while IFS= read -r line # loop through the crontab file
 do
 job="$line" # get a single line from a file (crontab job)
 
@@ -671,41 +648,22 @@ freq=$(echo "$job" | tr '*' o) # swap all asterisks to 'o' to avoid issues with 
 
 translate $freq # translate the frequency string
 string=$retval # get the return value from the translate method
-jobCount=$(($jobCount+1)) # increment jobCount (##### TEST IF IT WORKS)
+jobCount=$(($jobCount+1)) # increment jobCount 
 string="$jobCount. $string"
 echo "$string $command"
 echo
-# jobCount=$(($jobCount+1)) # increment jobCount
-done # while loop end
+done <<< "$(crontab -l)" # here string to loop through the crontab list
+return $jobCount # return the number of jobs in the crontab
 fi
 
-return jobCount # return the number of jobs in the crontab
 }
 
 # MAIN FUNCTION:
 key=0 #default key for user input
 
-# pull crontab jobs and display menu, loop until user presses 9 to exit:
+# display menu, loop until user presses 9 to exit:
 until [ $key -eq 9 2>/dev/null ]
 do
-
-#i=-1 # to create keep track of crontab jobs
-#crontabList=$( crontab -l 2>/dev/null ) #get the content of the crontab file to check if it's empty
-#if [ -z "$crontabList" ] # check if empty
-#then
-#i=0 # set job count/ID to 0
-#else
-## a loop to count jobs:
-#while IFS= read -r line # loop through the crontab list
-#do
-#i=$(($i+1)) # count jobs
-#done <<< "$(crontab -l)" # here string to loop through the crontab list
-#fi
-#echo
-
-
-displayJobs # redirect output to /dev/null? so that it doesn't display the jobs and just counts them
-#totalJobs=$? # get the number of current jobs from displayJobs
 
 displayMenu #display menu
 echo
