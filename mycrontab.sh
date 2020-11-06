@@ -32,12 +32,12 @@ elif [ $option -eq 2 ]
 then
 customInsert
 else
-echo "Invalid input"
+echo "Invalid input."
 fi
 done
 
 freq=$retval # returns a frequency e.g. * * 1 2 3 from presetInsert or customInsert
-read -p "Enter a command:" command  # command e.g. echo "Hello"
+read -p "Enter a command: " command  # command e.g. echo "Hello"
 
 freqO=$(echo "$freq" | tr '*' o) # swap all asterisks to 'o' to avoid issues with the special character
 translate $freqO # pass the modified('o' instead of any '*') frequency to the translate function
@@ -49,7 +49,7 @@ newJob="$freq $command" # e.g. * * 1 2 3 echo "Hello" # freq is still the origin
 answer="" # reset answer
 until [ "$answer" = "$yes" -o "$answer" = "$no" 2>/dev/null ] # wait for a valid user input
 do
-read -p "Create the above job? (y/n):" answer
+read -p "Create the above job? (y/n): " answer
 if [ "$answer" = "$yes" ]
 then # add the newJob to crontab
 crontab -l 2>/dev/null | { cat; echo "$newJob"; } | crontab -
@@ -57,13 +57,14 @@ elif [ "$answer" = "$no" ]
 then
 echo "Job not inserted."
 else
-echo "Invalid input"
+echo "Invalid input."
 fi
 done
 }
 
 # a function that prompts a user to choose a preset frequency and returns it as a crontab frequency:
 presetInsert () {
+echo
 echo "1. Hourly"
 echo "2. Daily"
 echo "3. Weekly"
@@ -74,7 +75,7 @@ echo
 input=0 # default
 until [ $input -gt 0 -a $input -le 6 2>/dev/null ]
 do
-read -p "Choose one of the above options:" input
+read -p "Choose one of the above options: " input
 frequencyPreset=""
 case $input in
 1)
@@ -130,7 +131,7 @@ echo
 customInsert () {
 frequency=""
 
-echo "When would you like the job to occur? Type * for every."
+echo "When would you like the job to occur?"
 echo
 
 # INPUT MINUTES:
@@ -225,7 +226,7 @@ validInput=0 # validInput set to false (0) by default
 until [ $validInput -eq 1 ] # until the input is valid (1)
 do
 insertOptions "month" # display insert options for months
-read -p "Enter month (1-12; jan-dec): " month # display insert options for months
+read -p "Enter month (1-12; jan-dec): " month 
 
 month=$(echo "$month" | tr '[:upper:]' '[:lower:]' 2>/dev/null ) # translate the month to lowercase (in case it is a string)
 
@@ -336,7 +337,8 @@ retval=$frequency # return frequency e.g. 1 2 3 * *
 
 #edit a job:
 editJob () {
-echo "Choose a job to edit:"
+echo "Choose a job to edit: "
+echo
 displayJobs # displays all jobs in crontab
 totalJobs=$? # number of current jobs
 if [ $totalJobs -ne 0 ] # check if the job list has jobs
@@ -349,7 +351,7 @@ read -p "Enter job's number: " selectedJob # ask user for a job number to edit
 done
 crontab -l | sed ""$selectedJob"d" | crontab - # delete the 'selectedJob' line with the job to be deleted
 echo
-insertJob # insert an edited job
+insertJob # insert a new job
 echo
 echo "Job successfully edited."
 echo
@@ -358,7 +360,7 @@ fi
 
 #remove a job:
 removeJob () {
-echo "Choose a job to remove:"
+echo "Choose a job to remove: "
 displayJobs # displays all jobs in crontab
 totalJobs=$? # number of current jobs
 if [ $totalJobs -ne 0 ] # check if the job list has jobs
@@ -371,7 +373,7 @@ read -p "Enter job's number: " selectedJob # ask user for a job number to remove
 done
 crontab -l | sed ""$selectedJob"d" | crontab -  # delete the line with the job that needs to be removed
 echo
-echo "Job successfully removed"
+echo "Job successfully removed."
 echo
 fi
 
@@ -654,6 +656,7 @@ retval=$shortWeekday
 # if there are no jobs:
 #   displays a message saying "There are no crontab jobs",
 #   returns 0 as the number of current jobs;
+
 displayJobs () {
 
 crontabFile=$( crontab -l 2>/dev/null ) #get the content of the crontab job file to check if it's empty
@@ -708,36 +711,45 @@ echo
 displayMenu #display menu
 echo
 read -p "Choose an option: " key
-echo "Option chosen: $key"
-echo
+
 #cases:
 case $key in
 1) # display all jobs:
+echo "Option chosen: Display jobs"
+echo
 displayJobs
 ;;
 2) # insert a new job:
+echo "Option chosen: Insert a job"
+echo
 insertJob
 ;;
 3) # edit a job:
+echo "Option chosen: Edit a job"
+echo
 editJob
 ;;
 4) # remove a job:
+echo "Option chosen: Remove a job"
+echo
 removeJob
 ;;
 5) # remove all jobs:
+echo "Option chosen: Remove all jobs"
+echo
 if [ -z "$( crontab -l 2>/dev/null)" ] # if the crontab is empty
 then
-echo "There are no jobs to remove"
+echo "There are no jobs to remove."
 else # if there are jobs
 crontab -r 2>/dev/null
 echo "All jobs were removed."
 fi
 ;;
 9)
-echo "Exit"
+echo "Exit."
 ;;
 *)
-echo "Sorry, invalid input"
+echo "Sorry, invalid input."
 ;;
 esac
 done
